@@ -54,6 +54,11 @@ describe("Task 1", () => {
       const response = await getTask1("@@@####  ###$$$");
       expect(response.status).toBe(400);
     });
+
+    it("     ball$", async () => {
+      const response = await getTask1("     ball$");
+      expect(response.body).toStrictEqual({ msg: "Ball" });
+    });
   });
 });
 

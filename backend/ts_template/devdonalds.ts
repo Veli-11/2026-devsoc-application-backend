@@ -45,9 +45,88 @@ app.post("/parse", (req:Request, res:Response) => {
 // [TASK 1] ====================================================================
 // Takes in a recipeName and returns it in a form that 
 const parse_handwriting = (recipeName: string): string | null => {
-  // TODO: implement me
-  return recipeName
+  let newRecipe: string[] = [];
+  const len = recipeName.length;
+  let capitalise = true;
+  let removeWhitespace = true;
+
+  for (let i = 0; i < len; i++) {
+    // No invalid letters
+    if (!isValidLetter(recipeName[i])) {
+      continue;
+    }
+    // Removr excess whitespace after we saw a whitespace
+    if (removeWhitespace && isWhitespace(recipeName[i])) {
+      continue;
+    }
+
+    // We just saw a whitespace (word ended)
+    if (isWhitespace(recipeName[i])) {
+      capitalise = true;
+      removeWhitespace = true;
+      newRecipe.push(' ');
+      continue;
+    }
+
+    // We have found a letter, meaning it is a new word
+    removeWhitespace = false;
+
+    // Add the normal letter in
+    if (capitalise) {
+      newRecipe.push(recipeName[i].toUpperCase());
+      capitalise = false;
+    } else {
+      newRecipe.push(recipeName[i].toLowerCase());
+    }
+  }
+
+  // Cut any excess whitespace at the end that snuck in
+  while(isWhitespace(newRecipe[newRecipe.length - 1])) {
+    newRecipe.pop();
+  }
+
+  // Nothing left
+  if (newRecipe.length === 0) {
+    return null;
+  }
+
+  const returnedRecipe: string = newRecipe.join("");
+  
+  return returnedRecipe;
 }
+
+function isValidLetter(letter: string): boolean {
+  if ('a' <= letter && letter <= 'z') {
+    return true;
+  }
+
+  if ('A' <= letter && letter <= 'Z') {
+    return true
+  }
+
+  if (letter === ' ') {
+    return true;
+  }
+
+  if (letter === '-' || letter === '_') {
+    return true;
+  }
+
+  return false;
+}
+
+function isWhitespace(letter: string): boolean {
+  if (letter === ' ') {
+    return true;
+  }
+
+  if (letter === '-' || letter === '_') {
+    return true;
+  }
+
+  return false;
+}
+
 
 // [TASK 2] ====================================================================
 // Endpoint that adds a CookbookEntry to your magical cookbook
