@@ -1,5 +1,6 @@
 const request = require("supertest");
 
+
 describe("Task 1", () => {
   describe("POST /parse", () => {
     const getTask1 = async (inputStr) => {
@@ -173,12 +174,12 @@ describe("Task 3", () => {
     });
 
     it("exists reciple but wrong one", async () => {
-      const cheese = {
+      const burger = {
         type: "recipe",
-        name: "Cheese",
+        name: "Burger",
         requiredItems: [{ name: "Not Real", quantity: 1 }],
       };
-      const resp1 = await postEntry(cheese);
+      const resp1 = await postEntry(burger);
       expect(resp1.status).toBe(200);
 
       const resp2 = await getTask3("Banana");
@@ -231,50 +232,50 @@ describe("Task 3", () => {
     it("Multiplication", async () => {
       const item1 = {
         type: "recipe",
-        name: "One",
-        requiredItems: [{ name: "Two", quantity: 2 }, { name: "Four", quantity: 3 }],
+        name: "M One",
+        requiredItems: [{ name: "M Two", quantity: 2 }, { name: "M Four", quantity: 3 }],
       };
       const resp1 = await postEntry(item1);
       expect(resp1.status).toBe(200);
 
       const item2 = {
         type: "recipe",
-        name: "Two",
-        requiredItems: [{ name: "Three", quantity: 3 }, { name: "Four", quantity: 2 }],
+        name: "M Two",
+        requiredItems: [{ name: "M Three", quantity: 3 }, { name: "M Four", quantity: 2 }],
       };
       const resp2 = await postEntry(item2);
       expect(resp2.status).toBe(200);
 
       const resp4 = await postEntry({
         type: "ingredient",
-        name: "Three",
+        name: "M Three",
         cookTime: 2,
       });
       expect(resp4.status).toBe(200);
 
       const resp5 = await postEntry({
         type: "ingredient",
-        name: "Four",
+        name: "M Four",
         cookTime: 1,
       });
       expect(resp5.status).toBe(200);
 
-      const respFin = await getTask3("One");
-      expect(respFin.status).toBe(200);
+      const respFin = await getTask3("M One");
       expect(respFin.body).toStrictEqual({
-        "name": "One",
+        "name": "M One",
         "cookTime": 19,
         "ingredients": [
           {
-            "name": "Four",
+            "name": "M Four",
             "quantity": 7
           }, 
           {
-            "name": "Three", 
+            "name": "M Three", 
             "quantity": 6
           }
         ]
       });
+      expect(respFin.status).toBe(200);
       
     });
 
@@ -300,7 +301,7 @@ describe("Task 3", () => {
         name: "Three",
         requiredItems: [{ name: "Four", quantity: 1 }, { name: "Five", quantity: 2 }],
       };
-      const resp3 = await postEntry(item1);
+      const resp3 = await postEntry(item3);
       expect(resp3.status).toBe(200);
 
       const resp4 = await postEntry({
@@ -318,7 +319,6 @@ describe("Task 3", () => {
       expect(resp5.status).toBe(200);
 
       const respFin = await getTask3("One");
-      expect(respFin.status).toBe(200);
       expect(respFin.body).toStrictEqual({
         "name": "One",
         "cookTime": 4,
@@ -333,10 +333,8 @@ describe("Task 3", () => {
           }
         ]
       });
-
-      
-    });
-
+      expect(respFin.status).toBe(200);
     
+    });  
   });
 });
