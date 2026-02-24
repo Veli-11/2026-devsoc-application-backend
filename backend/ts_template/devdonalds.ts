@@ -99,11 +99,17 @@ const parse_handwriting = (recipeName: string): string | null => {
     return null;
   }
 
+  // COmbine it all together
   const returnedRecipe: string = newRecipe.join("");
   
   return returnedRecipe;
 }
 
+/**
+ * This function checks if its alphanumeric or whitespace
+ * @param {string} letter - The letter to check
+ * @returns {boolean} 1 if true, 0 if false
+ */
 function isValidLetter(letter: string): boolean {
   if ('a' <= letter && letter <= 'z') {
     return true;
@@ -124,6 +130,11 @@ function isValidLetter(letter: string): boolean {
   return false;
 }
 
+/**
+ * This function checks if the character is whitespace or not
+ * @param {string} letter - The character to check
+ * @returns {boolean} 1 if true
+ */
 function isWhitespace(letter: string): boolean {
   if (letter === ' ') {
     return true;
@@ -148,7 +159,7 @@ app.post("/entry", (req:Request, res:Response) => {
   if (type === 'recipe') {
     const reqItems = body.requiredItems;
     try {
-      addRecipe(type, name, reqItems);
+      addRecipe(name, reqItems);
     } catch (err) {
       res.status(400).send(err.message);
     }
@@ -157,66 +168,76 @@ app.post("/entry", (req:Request, res:Response) => {
   } else if (type === 'ingredient') {
     const cookTime = body.cookTime;
     try {
-      addIngredient(type, name, cookTime);
+      addIngredient(name, cookTime);
     } catch (err) {
       res.status(400).send(err.message);
     }
 
     // Bad type
   } else {
-    res.status(400).send("Bad type, not recipe or ingreident");
+    res.status(400).send("Bad type inputted, not <recipe> or <ingreident>");
   }
 
   res.status(200).send({});
 });
 
-function addRecipe(type: string, name: string, requiredItems: requiredItem[]): {} {
+/**
+ * This function adds a recipe to the cookbook
+ * @param {string} name - Name of the recipe
+ * @param {requiredItem[]} requiredItems - Required items
+ * @returns {}
+ */
+function addRecipe(name: string, requiredItems: requiredItem[]): {} {
   // Unique entry names
-  if (cookbook.ingredients.some(currEntry => currEntry.name === name) ||
-      cookbook.recipes.some(currEntry => currEntry.name === name)) {
-    throw new Error("Duplicate names");
+  if (findRecipeByName(name) || findIngredientByName(name)) {
+    throw new Error(`The name: ${name} already exists in the cookbook!`);
   }
 
   // No two required items can be the same
   let seenNames: string[] = [];
   for (let reqItem of requiredItems) {
     if (reqItem.name in seenNames) {
-      throw new Error("Double up element");
+      throw new Error(`A required ingredients name ${reqItem.name} appears twice!`);
     }
     seenNames.push(reqItem.name);
   }
 
+  // Add the recipe
   let newRecipe = {
-    type: type, 
+    type: 'recipe', 
     name: name, 
     requiredItems: requiredItems
   }
 
   cookbook.recipes.push(newRecipe);
-
   return {};
 }
 
-function addIngredient(type: string, name: string, cookTime: number): {} {
+/**
+ * This function adds an ingredient to the cookbook
+ * @param {string} name - Name of the recipe
+ * @param {number} cookTime - Required items
+ * @returns {}
+ */
+function addIngredient(name: string, cookTime: number): {} {
   // Must have positive cooktime
   if (cookTime < 0) {
-    throw new Error("Bad cooktime");
+    throw new Error(`Cooktime must be 0 or positive only. Inputted: ${cookTime}`);
   }
 
   // Unique entry names
-  if (cookbook.ingredients.some(currEntry => currEntry.name === name) ||
-      cookbook.recipes.some(currEntry => currEntry.name === name)) {
-    throw new Error("Duplicate names");
+  if (findRecipeByName(name) || findIngredientByName(name)) {
+    throw new Error(`The name: ${name} already exists in the cookbook!`);
   }
 
   // All good, add it
   let newIngredient = {
-    type: type, 
+    type: 'ingredient', 
     name: name,
     cookTime: cookTime
   }
-  cookbook.ingredients.push(newIngredient);
 
+  cookbook.ingredients.push(newIngredient);
   return {}
 }
 
@@ -230,16 +251,17 @@ app.get("/summary", (req:Request, res:Response) => {
     const summary = summariseRecipe(name);
     res.status(200).send(summary);
   } catch (err) {
-    if (err instanceof Error) {
-      res.status(400).json({ error: err.message });
-    } else {
-      res.status(400).json({ error: "Unknown error" });
-    }
-
+    res.status(400).json({ error: err.message });
   }
 
 });
 
+/**
+ * This function finds a recipe given its name
+ * @param {string} nameRecipe - Name of the recipe
+ * @returns {recipe} Recipe if we could find it
+ * @returns {null} If we could not find the recipe
+ */
 function findRecipeByName(nameRecipe: string): recipe | null {
   const foundRecipe = cookbook.recipes.find(recipe => recipe.name === nameRecipe);
   if (!foundRecipe) {
@@ -249,7 +271,12 @@ function findRecipeByName(nameRecipe: string): recipe | null {
   return foundRecipe;
 }
 
-
+/**
+ * This function finds an ingredient given its name
+ * @param {string} nameIngredient - Name of the recipe
+ * @returns {ingredient} Ingredient if we could find it
+ * @returns {null} If we could not find the recipe
+ */
 function findIngredientByName(nameIngredient: string): ingredient | null {
   const foundIngredient = cookbook.ingredients.find(ingred => ingred.name === nameIngredient);
   if (!foundIngredient) {
@@ -263,7 +290,7 @@ function summariseRecipe(name: string): summary {
   // Tries to find a recipe with the name
   const recipe = findRecipeByName(name);
   if (recipe === null) {
-    throw new Error("cant find a recipe");
+    throw new Error(`Cant find a recipe with the name: ${name}`);
   }
 
   // Set up the stack and add the ingredients of the recipe
@@ -272,10 +299,10 @@ function summariseRecipe(name: string): summary {
     stack.push({name: ingred.name, amount: ingred.quantity});
   }
 
+  // Holds the cook time and required ingredients
   let currCookTime = 0;
   let currReqIngreds: requiredItem[] = [];
 
-  console.log("I made it here");
   // While the stack is empty, there is still stuff to process
   while (stack.length !== 0) {
     // Take the final item, and see what type it is
@@ -311,7 +338,7 @@ function summariseRecipe(name: string): summary {
     }
 
     // The required item does not exist!
-    throw new Error("The subsidary item dont exist");
+    throw new Error(`The subsidary item: ${currEntry.name} is not in the cookbook`);
   }
 
   // Return the finished summary

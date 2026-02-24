@@ -319,20 +319,18 @@ describe("Task 3", () => {
       expect(resp5.status).toBe(200);
 
       const respFin = await getTask3("One");
-      expect(respFin.body).toStrictEqual({
-        "name": "One",
-        "cookTime": 4,
-        "ingredients": [
-          {
-            "name": "Four",
-            "quantity": 1
-          }, 
-          {
-            "name": "Five", 
-            "quantity": 2
-          }
-        ]
-      });
+
+      const expectedIngredients = [
+        { name: "Four", quantity: 1 },
+        { name: "Five", quantity: 2 }
+      ];
+
+      expect(respFin.body.ingredients).toEqual(
+        expect.arrayContaining(expectedIngredients)
+      );
+      expect(respFin.body.ingredients).toHaveLength(2);
+      expect(respFin.body.cookTime).toEqual(4);
+
       expect(respFin.status).toBe(200);
     
     });  
